@@ -1,16 +1,91 @@
 ---
-title: 'Second post'
-description: 'Lorem ipsum dolor sit amet'
-pubDate: 'Jul 15 2022'
+title: 'Building an Enterprise Active Directory Sandbox from Scratch'
+description: 'A step-by-step guide to building an isolated Active Directory lab, configuring custom OUs, and enforcing Group Policies.'
+pubDate: 'Jul 22 2026'
 heroImage: '../../assets/blog-placeholder-4.jpg'
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
+This document serves as a comprehensive engineering log and deployment blueprint for establishing an isolated Active Directory (AD) enterprise sandbox environment. It details the complete workflow from initial hypervisor setup and virtual switch configuration to directory schema creation, OU structure design, and Group Policy restriction enforcement.
 
-Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc. Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra massa massa ultricies mi.
+## 💻 Phase 1: Hypervisor Architecture & VM Provisioning
 
-Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
+Before configuring internal network settings or directory domains, the hardware virtualization layer was established to isolate guest kernels from the host machine.
 
-Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id cursus metus aliquam eleifend mi.
+### 1. Domain Controller Node (WIN-N064AKD5SSQ)
 
-Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
+* **OS Environment:** Windows Server 2022 (64-bit)
+* **Base Memory:** 4096 MB
+* **vCPUs:** 2 Cores
+* **Storage Profile:** 50.00 GB Dynamically Allocated Virtual Disk (VDI)
+
+### 2. Workstation Client Node (DESKTOP-FQRKET4)
+
+* **OS Environment:** Windows 10 Enterprise/Pro (64-bit)
+* **Base Memory:** 4096 MB
+* **vCPUs:** 2 Cores
+* **Storage Profile:** 50.00 GB VDI attached to a virtual SATA Controller
+* **Boot Order:** Floppy, Optical, Hard Disk
+
+---
+
+## 🔌Phase 2: Network Isolation & Interface Remediation
+
+To bypass host-OS driver routing constraints and simulate an isolated physical copper switch, the virtual nodes were migrated from default NAT/Host-only setups to a software-defined Internal Network topology.
+
+### 1. Virtual Switch Configuration
+
+* **Attachment Mode:** 'Internal Network'
+* **Switch Segment Name:** 'labnetwork'
+* **Promiscuous Mode:** 'Allow All'
+* **Link State:** 'Cable Connected'
+
+### 2. Static IP Framework
+
+Because private software switches lack a default DHCP daemon, static Layer-3 network parameters were declared manually:
+
+| Property | Domain Controller ('WIN-N064AKD5SSQ') |Client Workstation (DESKTOP-FQRKET4) |
+| :--- | :--- | :--- |
+| **IPv4 Address** | '192.168.56.10' | '192.168.56.20'
+| **Subnet Mask** | '255.255.255.0' | '255.255.255.0' |
+| **Preferred DNS** | '127.0.0.1' (Loopback) | '192.168.56.10' (DC Target) |
+
+### 3. Interface Reset & Link Refresh 
+
+Network link states were reset using elevated PowerShell commands to flush historical ARP caches and update link states:
+
+'''powershell
+Disable-NetAdapter -Name "Ethernet" -Confirm:$false
+Enable-NetAdapter -Name "Ethernet"'''
+
+### Layer-3 & Layer-7 Validation
+
+1. **ICMP Line-Speed Check:**
+
+   ```text
+   Pinging 192.168.56.10 with 32 bytes of data:
+   Reply from 192.168.56.10: bytes=32 time<1ms TTL=128
+   Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)
+
+2. DNS Resolver Verification:
+
+   ipconfig /flushdns
+   nslookup sandbox.local
+
+Resolver Output: Server: Unknown | Address: 192.168.56.10 | Name: sandbox.local
+
+👑 Phase 3: AD DS Promotion & Domain Integration1. Domain Controller PromotionLaunched Server Manager -> Add Roles and Features.Installed Active Directory Domain Services (AD DS) and DNS Server roles along with administrative management consoles.Promoted the server to a Domain Controller within a new forest named sandbox.local.Completed configuration and allowed the automated system reboot.2. Workstation Domain JoiningOpened System Properties (sysdm.cpl) on the Windows 10 workstation.Toggled system membership from Workgroup to Domain with the string sandbox.local.Authenticated using domain administrative credentials (sandbox.local\Administrator).Validation: Received prompt confirmation "Welcome to the sandbox.local domain" followed by an automated reboot.
+
+
+📂 Phase 4: Directory Architecture & Account ProvisioningTo replicate enterprise directory hygiene and facilitate targeted Group Policy distribution, a custom Organizational Unit (OU) structure was mapped via Active Directory Users and Computers (dsa.msc).Directory Layout Treesandbox.local (Domain Root)
+└── 📂 Corporate-HQ (Organizational Unit Container)
+    ├── 📂 IT (Sub-OU)
+    ├── 📂 HR (Sub-OU)
+    └── 📂 Finance (Sub-OU)
+Object & Permission MappingGlobal Security Group: Provisioned Finance-Depts-Clearance under the Corporate-HQ container.User Provisioning: Created domain user account Pam Sapp (sandbox.local\psapp) inside the HR sub-OU.Group Access Assignment: Added Pam Sapp directly to the Finance-Depts-Clearance group.🔒 Phase 5: Group Policy Architecture & GPO Deployment1. Policy InstantiationLaunched the Group Policy Management Console (gpmc.msc) on the DC.Linked a new GPO named Desktop-Restrictions-Policy directly to the Corporate-HQ root OU container.2. Restrictive Security ParametersNavigated through the administrative layout structure:User Configuration -> Policies -> Administrative Templates -> SystemPolicy Rule Entry: Prevent access to the command promptState Configuration: EnabledSub-parameter: Set Disable the command prompt script processing also? to No (Ensures logical logon/logoff scripts execute seamlessly while blocking shell access).🧪 Phase 6: Operational Enforcement & Testing1. Endpoint Policy SynchronizationLogged into the Windows 10 client machine using domain credentials (sandbox.local\psapp) and forced immediate policy payload retrieval from the domain controller's SYSVOL share:gpupdate /force
+2. Execution Interception TestAttempting to execute cmd.exe from the Start Menu triggers immediate kernel interception referencing the pushed GPO registry parameters:Microsoft Windows [Version 10.0.19045.3803]
+(c) Microsoft Corporation. All rights reserved.
+
+The command prompt has been disabled by your administrator.
+
+Press any key to continue . . .
+Pressing any key terminates the system thread process instantly, demonstrating complete domain integration and structural security management success.🎯 System Operations Check: Active Directory Domain Controller, Internal Virtual Switch, DNS Resolution, User/Group Provisioning, and GPO Cascading Infrastructure are 100% Operational..
