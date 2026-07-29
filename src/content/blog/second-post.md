@@ -66,14 +66,26 @@ Enable-NetAdapter -Name "Ethernet"'''
    Reply from 192.168.56.10: bytes=32 time<1ms TTL=128
    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)
 
-2. DNS Resolver Verification:
+2. **DNS Resolver Verification:**
 
-   ipconfig /flushdns
-   nslookup sandbox.local
+   'ipconfig /flushdns
+   
+   nslookup sandbox.local'
 
-Resolver Output: Server: Unknown | Address: 192.168.56.10 | Name: sandbox.local
+Resolver Output: 'Server: Unknown | Address: 192.168.56.10 | Name: sandbox.local'
 
-👑 Phase 3: AD DS Promotion & Domain Integration1. Domain Controller PromotionLaunched Server Manager -> Add Roles and Features.Installed Active Directory Domain Services (AD DS) and DNS Server roles along with administrative management consoles.Promoted the server to a Domain Controller within a new forest named sandbox.local.Completed configuration and allowed the automated system reboot.2. Workstation Domain JoiningOpened System Properties (sysdm.cpl) on the Windows 10 workstation.Toggled system membership from Workgroup to Domain with the string sandbox.local.Authenticated using domain administrative credentials (sandbox.local\Administrator).Validation: Received prompt confirmation "Welcome to the sandbox.local domain" followed by an automated reboot.
+## 👑 Phase 3: AD DS Promotion & Domain Integration1. 
+
+### Domain Controller Promotion
+1. Launched **Server Manager -> Add Roles and Features.** 
+2. Installed **Active Directory Domain Services (AD DS)** and **DNS Server** roles along with administrative management consoles.
+3. Promoted the server to a Domain Controller within a new forest named 'sandbox.local'.
+4. Completed configuration and allowed the automated system reboot.
+
+2. ### Workstation Domain Joining
+1. Opened System Properties ('sysdm.cpl') on the Windows 10 workstation.
+2. Toggled system membership from Workgroup to Domain with the string 'sandbox.local'.
+3. Authenticated using domain administrative credentials ('sandbox.local\Administrator').**Validation:** Received prompt confirmation "Welcome to the sandbox.local domain" followed by an automated reboot.
 
 
 📂 Phase 4: Directory Architecture & Account ProvisioningTo replicate enterprise directory hygiene and facilitate targeted Group Policy distribution, a custom Organizational Unit (OU) structure was mapped via Active Directory Users and Computers (dsa.msc).Directory Layout Treesandbox.local (Domain Root)
