@@ -76,7 +76,7 @@ Resolver Output: 'Server: Unknown | Address: 192.168.56.10 | Name: sandbox.local
 
 ## 👑 Phase 3: AD DS Promotion & Domain Integration1. 
 .
-### Domain Controller Promotion
+### 1. Domain Controller Promotion
 1. Launched **Server Manager -> Add Roles and Features.** 
 2. Installed **Active Directory Domain Services (AD DS)** and **DNS Server** roles along with administrative management consoles.
 3. Promoted the server to a Domain Controller within a new forest named 'sandbox.local'.
