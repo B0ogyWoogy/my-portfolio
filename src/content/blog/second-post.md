@@ -68,7 +68,8 @@ Enable-NetAdapter -Name "Ethernet"'''
 
 2. **DNS Resolver Verification:**
 
-   ```ipconfig /flushdns
+```
+   ipconfig /flushdns
    nslookup sandbox.local
       ```
 
