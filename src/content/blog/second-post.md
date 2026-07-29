@@ -91,11 +91,12 @@ Resolver Output: `Server: Unknown | Address: 192.168.56.10 | Name: sandbox.local
 
 To replicate enterprise directory hygiene and facilitate targeted Group Policy distribution, a custom Organizational Unit (OU) structure was mapped via Active Directory Users and Computers (`dsa.msc`).
 
-`Directory Layout Treesandbox.local (Domain Root)
+```Directory Layout Treesandbox.local (Domain Root)
 └── 📂 Corporate-HQ (Organizational Unit Container)
     ├── 📂 IT (Sub-OU)
     ├── 📂 HR (Sub-OU)
     └── 📂 Finance (Sub-OU)
+``` 
 Object & Permission MappingGlobal Security Group: Provisioned Finance-Depts-Clearance under the Corporate-HQ container.User Provisioning: Created domain user account Pam Sapp (sandbox.local\psapp) inside the HR sub-OU.Group Access Assignment: Added Pam Sapp directly to the Finance-Depts-Clearance group.🔒 Phase 5: Group Policy Architecture & GPO Deployment1. Policy InstantiationLaunched the Group Policy Management Console (gpmc.msc) on the DC.Linked a new GPO named Desktop-Restrictions-Policy directly to the Corporate-HQ root OU container.2. Restrictive Security ParametersNavigated through the administrative layout structure:User Configuration -> Policies -> Administrative Templates -> SystemPolicy Rule Entry: Prevent access to the command promptState Configuration: EnabledSub-parameter: Set Disable the command prompt script processing also? to No (Ensures logical logon/logoff scripts execute seamlessly while blocking shell access).🧪 Phase 6: Operational Enforcement & Testing1. Endpoint Policy SynchronizationLogged into the Windows 10 client machine using domain credentials (sandbox.local\psapp) and forced immediate policy payload retrieval from the domain controller's SYSVOL share:gpupdate /force
 2. Execution Interception TestAttempting to execute cmd.exe from the Start Menu triggers immediate kernel interception referencing the pushed GPO registry parameters:Microsoft Windows [Version 10.0.19045.3803]
 (c) Microsoft Corporation. All rights reserved.
