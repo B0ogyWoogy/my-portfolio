@@ -71,7 +71,7 @@ Enable-NetAdapter -Name "Ethernet"'''
 ```
    ipconfig /flushdns
    nslookup sandbox.local
-      ```
+```
 
 Resolver Output: `Server: Unknown | Address: 192.168.56.10 | Name: sandbox.local`
 
